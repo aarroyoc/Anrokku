@@ -10,5 +10,5 @@ class Coche:
     def mover(self,direction):
         if self.orientation == "H":
             self.x = self.x + direction
-        else
+        else:
             self.y = self.y + direction
