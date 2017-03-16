@@ -1,6 +1,11 @@
 #!/usr/bin/env python2
 # -*- coding:utf-8 -*-
 
+# TODO: Salirse si una ma
+# TODO: pintar nivel
+# TODO: Fix output
+# TODO: Documentación?
+
 import coche
 
 
@@ -10,7 +15,7 @@ def in_game(n_nivel):
     movimientos = 0
     while not win:
         # MOSTRAR RECORD
-        print "NIVEL",n_nivel -1,"- RECORD",( records[n_nivel - 1] if len(records) >= n_nivel else "SIN BATIR")
+        print "NIVEL",n_nivel, "- RECORD",( records[n_nivel - 1] if len(records) >= n_nivel else "SIN BATIR")
         #pintar_nivel(j_nivel)
         entrada = raw_input("Introduzca los movimientos: ")
         for c in entrada:
