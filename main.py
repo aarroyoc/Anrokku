@@ -1,12 +1,29 @@
 #!/usr/bin/env python2
 # -*- coding:utf-8 -*-
 
-# TODO: Salirse si una ma
+# Arroyo Calle, Adrián
+# Crespo Jiménez, Cristina Alejandra
+
+# TODO: Salirse si una mal
 # TODO: pintar nivel
 # TODO: Fix output
 # TODO: Documentación?
 
 import coche
+
+def pintar_nivel(nivel):
+    for y in range(1,7):
+        for line in range(0,3):
+            for x in range(1,7):
+                pintado = False
+                for coche in nivel:
+                    if coche.img(x,y) != None:
+                        print coche.img(x,y)[line],
+                        pintado = True
+                        break
+                if not pintado:
+                    print " "*5,
+            print ""
 
 
 def in_game(n_nivel):
@@ -16,7 +33,7 @@ def in_game(n_nivel):
     while not win:
         # MOSTRAR RECORD
         print "NIVEL",n_nivel, "- RECORD",( records[n_nivel - 1] if len(records) >= n_nivel else "SIN BATIR")
-        #pintar_nivel(j_nivel)
+        pintar_nivel(j_nivel)
         entrada = raw_input("Introduzca los movimientos: ")
         for c in entrada:
             for car in j_nivel:
@@ -77,7 +94,7 @@ niveles = []
 f_niveles = open("niveles.txt","r")
 n_niveles = f_niveles.readline()
 n_niveles = int(n_niveles)
-names = "ABCDEFQHIJQLMNOPQRSTUVWXYZ"
+names = "ABCDEFGHIJQLMNOPQRSTUVWXYZ"
 
 for i in range(0,n_niveles):
 	n_coches = int(f_niveles.readline())
@@ -85,9 +102,7 @@ for i in range(0,n_niveles):
 	for j in range(0,n_coches):
 		coches.append(coche.Coche(f_niveles.readline(),names[j]))
 	niveles.append(coches[:])
-
 play_menu()
-#pintar_nivel(niveles[0])
 
 
 print "Gracias por jugar"
