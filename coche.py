@@ -44,10 +44,10 @@ class Coche:
                 libre = libre and car.libre(x,y)
         if x < 1 or x > 6:
             libre = False
+            if x == 7 and y == 3:
+                libre = True
         if y < 1 or y > 6:
             libre = False
-            if y == 7 and x == 3:
-                libre = True
         return libre
     def img(self, x, y):
         if x == self.x and y == self.y:
