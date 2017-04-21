@@ -4,45 +4,53 @@
 # Arroyo Calle, Adrián
 # Crespo Jiménez, Cristina Alejandra
 
-# TODO: Salirse si una mal
-# TODO: pintar nivel - DONE
-# TODO: Fix output
-# TODO: Documentación? 
-
-
-COE = u'\u2500' # ─
-CNS = u'\u2502' # │
-CES = u'\u250C' # ┌
-CSO = u'\u2510' # ┐
-CNE = u'\u2514' # └
-CON = u'\u2518' # ┘
-COES = u'\u252C' # ┬
-CNES = u'\u251C' # ├
-CONS = u'\u2524' # ┤
-CONE = u'\u2534' # ┴
-CSOM = u'\u2593' # ▒ 
-
 import coche
+import gtk
+import cairo
 
-def pintar_nivel(nivel):
-    print CES + (COES + COE*5)*6 + COES + CSO
-    for y in range(1,7):
-        for line in range(0,3):
-            print CNS,
-            for x in range(1,7):
-                pintado = False
-                for coche in nivel:
-                    if coche.img(x,y) != None:
-                        print coche.img(x,y)[line],
-                        pintado = True
-                        break
-                if not pintado:
-                    print " "*5,
-            print CNS if y != 3 else CSOM
-        if y != 6:
-            print CNES + " "*37 + CONS
-    print CNE + (CONE + COE*5)*6 + CONE + CON
+class GameArea(gtk.DrawingArea):
+	def __init__(self):
+		super(GameArea,self).__init__()
+		self.connect("expose-event",self.expose)
+		self.car = gtk.gdk.pixbuf_new_from_file("car.png")
+	def expose(self,widget,context):
+		cr = widget.window.cairo_create()
+		width, height = widget.window.get_size()
+		cr.rectangle(0,0,width,height)
+		cr.set_source_rgb(1,1,1)
+		cr.fill()
+		cr.set_source_rgb(1,0,0)
+		cr.select_font_face("Comic Sans MS", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+		cr.set_font_size(20)
+		cr.move_to(20,20)
+		cr.show_text("Anrokku")
+		cr.save()
+		#cr.scale()
+		cr.set_source_pixbuf(self.car,0,0)
+		#cr.rectangle(100,100,100,100) y cr.clip() si quieres recortar
+		cr.paint()
+		cr.restore()
 
+class Ventana(gtk.Window):
+	def __init__(self):
+		super(Ventana,self).__init__()
+		self.set_title("Anrokku")
+		self.set_default_size(640,480)
+		self.game = GameArea()
+		self.add(self.game)
+		self.connect("delete-event",self.confirmar)
+		self.connect("destroy",gtk.main_quit)
+		self.show_all()
+	def confirmar(self,widget,event,data=None):
+		dialog = gtk.MessageDialog(type=gtk.MESSAGE_QUESTION,buttons=gtk.BUTTONS_YES_NO,flags=gtk.DIALOG_MODAL)
+		dialog.set_title("Anrokku")
+		dialog.set_markup("¿Desea salir de Anrokku?")
+		response = dialog.run()
+		if response == gtk.RESPONSE_YES:
+			return False
+		else:
+			dialog.destroy()
+			return True
 
 def in_game(n_nivel):
     j_nivel = niveles[n_nivel - 1][:]
@@ -83,20 +91,6 @@ def in_game(n_nivel):
             in_game(n_nivel+1)
         else:
             pass
-        
-    
-        
-
-def play_menu():
-    """ Muestra el menú de selección de nivel """
-    max_level = (len(records) + 1)
-    n_nivel = -1
-    while n_nivel < 1 or n_nivel > max_level:
-        n_nivel = raw_input("Elige el nivel a jugar (1-%d)" % max_level)
-        n_nivel = int(n_nivel)
-    print "Jugando nivel", n_nivel
-    in_game(n_nivel)
-    return None
 
 def write_records():
     f_records = open("records.txt","w")
@@ -110,12 +104,6 @@ def read_records():
             records.append(int(line))
     except:
         pass
-
-print "Anrokku"
-print "="*80
-print "Arroyo Calle, Adrián"
-print "Crespo Jiménez, Cristina Alejandra"
-print ""
 
 records = []
 read_records()
@@ -133,7 +121,8 @@ for i in range(0,n_niveles):
     for j in range(0,n_coches):
         coches.append(coche.Coche(f_niveles.readline(),names[j]))
     niveles.append(coches[:])
-play_menu()
 
+# START
 
-print "Gracias por jugar"
+ventana = Ventana()
+gtk.main()
