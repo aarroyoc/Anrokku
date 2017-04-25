@@ -7,29 +7,47 @@
 import coche
 import gtk
 import cairo
+import math
 
 class GameArea(gtk.DrawingArea):
 	def __init__(self):
 		super(GameArea,self).__init__()
 		self.connect("expose-event",self.expose)
-		self.car = gtk.gdk.pixbuf_new_from_file("car.png")
+		self.car = gtk.gdk.pixbuf_new_from_file("data/car2.png")
 	def expose(self,widget,context):
 		cr = widget.window.cairo_create()
 		width, height = widget.window.get_size()
 		cr.rectangle(0,0,width,height)
 		cr.set_source_rgb(1,1,1)
 		cr.fill()
-		cr.set_source_rgb(1,0,0)
-		cr.select_font_face("Comic Sans MS", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-		cr.set_font_size(20)
-		cr.move_to(20,20)
-		cr.show_text("Anrokku")
+		#cr.set_source_rgb(1,0,0)
+		#cr.select_font_face("Comic Sans MS", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+		#cr.set_font_size(20)
+		#cr.move_to(20,20)
+		#cr.show_text("Anrokku")
 		cr.save()
 		#cr.scale()
-		cr.set_source_pixbuf(self.car,0,0)
+		#cr.set_source_pixbuf(self.car,0,0)
 		#cr.rectangle(100,100,100,100) y cr.clip() si quieres recortar
 		cr.paint()
 		cr.restore()
+
+                ## PAINT CARS
+                for car in self.level:
+                    cr.save()
+                    img_width = 256
+                    img_height = 128
+                    x_scale = float(width) / float(img_width)
+                    y_scale = float(height) / float(img_height)
+                    cr.scale(x_scale/3,y_scale/6)
+                    if car.orientation == "V":
+                        cr.translate((car.x-1)*128,(car.y-1)*128)
+                        cr.rotate(math.pi/2)
+                    cr.set_source_pixbuf(self.car,(car.x -1)*128,(car.y - 1)*128)
+                    cr.paint()
+                    cr.restore()
+        def set_level(self,level):
+            self.level = level
 
 class Ventana(gtk.Window):
 	def __init__(self):
@@ -37,6 +55,7 @@ class Ventana(gtk.Window):
 		self.set_title("Anrokku")
 		self.set_default_size(640,480)
 		self.game = GameArea()
+                self.game.set_level(niveles[0][:])
 		self.add(self.game)
 		self.connect("delete-event",self.confirmar)
 		self.connect("destroy",gtk.main_quit)
