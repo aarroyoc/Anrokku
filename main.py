@@ -14,6 +14,7 @@ class GameArea(gtk.DrawingArea):
 		super(GameArea,self).__init__()
 		self.connect("expose-event",self.expose)
 		self.car = gtk.gdk.pixbuf_new_from_file("data/car2.png")
+                self.limo = gtk.gdk.pixbuf_new_from_file("data/limo.png")
 	def expose(self,widget,context):
 		cr = widget.window.cairo_create()
 		width, height = widget.window.get_size()
@@ -35,15 +36,17 @@ class GameArea(gtk.DrawingArea):
                 ## PAINT CARS
                 for car in self.level:
                     cr.save()
+                    img = self.car if car.size == 2 else self.limo
                     img_width = 256
                     img_height = 128
                     x_scale = float(width) / float(img_width)
                     y_scale = float(height) / float(img_height)
                     cr.scale(x_scale/3,y_scale/6)
                     if car.orientation == "V":
-                        cr.translate((car.x-1)*128,(car.y-1)*128)
+                        cr.translate((car.x)*128,(car.y)*128)
                         cr.rotate(math.pi/2)
-                    cr.set_source_pixbuf(self.car,(car.x -1)*128,(car.y - 1)*128)
+                        cr.translate(-(car.x)*128,-(car.y-1)*128)
+                    cr.set_source_pixbuf(img,(car.x -1)*128,(car.y - 1)*128)
                     cr.paint()
                     cr.restore()
         def set_level(self,level):
