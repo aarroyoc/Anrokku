@@ -4,6 +4,11 @@
 # Arroyo Calle, Adrián
 # Crespo Jiménez, Cristina Alejandra
 
+# TODO: with open
+# TODO: Mover con raton
+# TODO: Elegir nivel
+# TODO: Contar movimientos
+
 import coche
 import gtk
 import cairo
@@ -12,9 +17,12 @@ import math
 class GameArea(gtk.DrawingArea):
 	def __init__(self):
 		super(GameArea,self).__init__()
+		self.set_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK)
 		self.connect("expose-event",self.expose)
-		self.car = gtk.gdk.pixbuf_new_from_file("data/car2.png")
-                self.limo = gtk.gdk.pixbuf_new_from_file("data/limo.png")
+		self.connect("button-press-event",self.drag_start)
+		self.connect("button-release-event",self.drag_end)
+		self.connect("motion-notify-event",self.drag)
+		self.car = None
 	def expose(self,widget,context):
 		cr = widget.window.cairo_create()
 		width, height = widget.window.get_size()
@@ -36,7 +44,6 @@ class GameArea(gtk.DrawingArea):
                 ## PAINT CARS
                 for car in self.level:
                     cr.save()
-                    img = self.car if car.size == 2 else self.limo
                     img_width = 256
                     img_height = 128
                     x_scale = float(width) / float(img_width)
@@ -46,9 +53,27 @@ class GameArea(gtk.DrawingArea):
                         cr.translate((car.x)*128,(car.y)*128)
                         cr.rotate(math.pi/2)
                         cr.translate(-(car.x)*128,-(car.y-1)*128)
-                    cr.set_source_pixbuf(img,(car.x -1)*128,(car.y - 1)*128)
+                    cr.set_source_pixbuf(car.img,(car.x -1)*128,(car.y - 1)*128)
                     cr.paint()
                     cr.restore()
+	def drag_start(self,widget,event):
+		# SELECCIONAR COCHE
+		width, height = widget.window.get_size()
+		u_width = width / 6
+		u_height = height / 6
+		for car in self.level:
+			if u_width*(car.x -1) < event.x < u_width*(car.x + ( (car.size -1) if car.orientation == "H" else 0)):
+				if u_height*(car.y -1) < event.y < u_height*(car.y+(( car.size -1) if car.orientation == "V" else 0)):
+					self.car = car
+					break
+	def drag_end(self,widget,event):
+		self.car = None
+		## CONTAR MOVIMIENTOS Y ACTUALIZAR
+	def drag(self,widget,event):
+		if self.car != None:
+			if self.car.orientation == "H":
+				pass # TODO: Sumar movimiento relativo, evitar golpes
+			
         def set_level(self,level):
             self.level = level
 
@@ -56,7 +81,7 @@ class Ventana(gtk.Window):
 	def __init__(self):
 		super(Ventana,self).__init__()
 		self.set_title("Anrokku")
-		self.set_default_size(640,480)
+		self.set_default_size(500,500)
 		self.game = GameArea()
                 self.game.set_level(niveles[0][:])
 		self.add(self.game)
@@ -135,13 +160,12 @@ niveles = []
 f_niveles = open("niveles.txt","r")
 n_niveles = f_niveles.readline()
 n_niveles = int(n_niveles)
-names = "ABCDEFGHIJQLMNOPQRSTUVWXYZ"
 
 for i in range(0,n_niveles):
     n_coches = int(f_niveles.readline())
     coches = []
     for j in range(0,n_coches):
-        coches.append(coche.Coche(f_niveles.readline(),names[j]))
+        coches.append(coche.Coche(f_niveles.readline(), True if j == 0 else False))
     niveles.append(coches[:])
 
 # START
