@@ -74,7 +74,9 @@ class GameArea(gtk.DrawingArea):
 		if self.car != None:
 			self.car.x = round((self.car.real_x/128)+1)
 			self.car.y = round((self.car.real_y/128)+1)
-			## CONTAR MOVIMIENTOS Y ACTUALIZAR
+                        if self.car.x == 6 and self.car.y == 3:
+                            print "Victoria"
+			# TODO CONTAR MOVIMIENTOS 
 			self.car = None
 			self.set_level(self.level)
 			self.queue_draw()
@@ -82,11 +84,8 @@ class GameArea(gtk.DrawingArea):
 		if self.car != None:
 			if self.car.orientation == "H":
 				self.car.real_x += (event.x - self.car.real_x) + self.x_start
-				print "Real X",self.car.real_x
-				print "Limit", ((self.car.x-1)*128)
 				if self.car.real_x > (self.car.x-1)*128:
 					if not self.car.casilla_libre(1,self.level):
-						print "Casilla ocupada"
 						self.car.real_x = (self.car.x-1)*128
 					else:
 						self.car.x += 1
@@ -95,15 +94,14 @@ class GameArea(gtk.DrawingArea):
 						self.car.real_x = (self.car.x-1)*128
 					else:
 						self.car.x -= 1
-			else:# FALLO AL BAJAR MUY RAPIDO
+			else:
 				self.car.real_y += (event.y - self.car.real_y) + self.y_start
-				if self.car.real_y > (self.car.y)*128:
+				if self.car.real_y > (self.car.y-1)*128:
 					if not self.car.casilla_libre(1,self.level):
-						print "Casilla ocupada"
 						self.car.real_y = (self.car.y-1)*128
 					else:
 						self.car.y += 1
-				if self.car.real_y < (self.car.y)*128:
+				if self.car.real_y < (self.car.y-1)*128:
 					if not self.car.casilla_libre(-1,self.level):
 						self.car.real_y = (self.car.y-1)*128
 					else:
