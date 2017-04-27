@@ -7,8 +7,9 @@ IMG_SIZE2 = ["data/car1.png","data/car2.png","data/car3.png","data/car4.png"]
 IMG_SIZE3 = ["data/limo.png","data/truck.png"]
 
 class Coche:
-    def __init__(self,load_data,first=False):
+    def __init__(self,load_data,name,first=False):
         """ Parsea los datos de cada coche según el formato del fichero e inicializa sus variables internas """
+	self.name = name
         self.orientation = load_data[0]
         self.x = int(load_data[1])
         self.y = int(load_data[2])
@@ -20,6 +21,8 @@ class Coche:
 	else:
 		path = IMG_SIZE3[random.randint(0,1)]
 	self.img = gtk.gdk.pixbuf_new_from_file(path)
+	self.real_x = 0
+	self.real_y = 0
 		
     def libre(self,x,y):
         if self.orientation == "H":
@@ -32,6 +35,7 @@ class Coche:
                     return False
         return True
     def casilla_libre(self,direction,nivel):
+	""" Casilla libre comprueba si la casilla en cierta direccion esta libre para un coche o no """
         x = self.x
         y = self.y
         if self.orientation == "H":

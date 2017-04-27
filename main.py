@@ -23,6 +23,8 @@ class GameArea(gtk.DrawingArea):
 		self.connect("button-release-event",self.drag_end)
 		self.connect("motion-notify-event",self.drag)
 		self.car = None
+		self.x_start = 0
+		self.y_start = 0
 	def expose(self,widget,context):
 		cr = widget.window.cairo_create()
 		width, height = widget.window.get_size()
@@ -50,10 +52,10 @@ class GameArea(gtk.DrawingArea):
                     y_scale = float(height) / float(img_height)
                     cr.scale(x_scale/3,y_scale/6)
                     if car.orientation == "V":
-                        cr.translate((car.x)*128,(car.y)*128)
+                        cr.translate(car.real_x + 128,car.real_y + 128)
                         cr.rotate(math.pi/2)
-                        cr.translate(-(car.x)*128,-(car.y-1)*128)
-                    cr.set_source_pixbuf(car.img,(car.x -1)*128,(car.y - 1)*128)
+                        cr.translate(-car.real_x - 128,-car.real_y)
+                    cr.set_source_pixbuf(car.img,car.real_x,car.real_y)
                     cr.paint()
                     cr.restore()
 	def drag_start(self,widget,event):
@@ -65,17 +67,54 @@ class GameArea(gtk.DrawingArea):
 			if u_width*(car.x -1) < event.x < u_width*(car.x + ( (car.size -1) if car.orientation == "H" else 0)):
 				if u_height*(car.y -1) < event.y < u_height*(car.y+(( car.size -1) if car.orientation == "V" else 0)):
 					self.car = car
+					self.x_start = self.car.real_x - event.x
+					self.y_start = self.car.real_y - event.y
 					break
 	def drag_end(self,widget,event):
-		self.car = None
-		## CONTAR MOVIMIENTOS Y ACTUALIZAR
+		if self.car != None:
+			self.car.x = round((self.car.real_x/128)+1)
+			self.car.y = round((self.car.real_y/128)+1)
+			## CONTAR MOVIMIENTOS Y ACTUALIZAR
+			self.car = None
+			self.set_level(self.level)
+			self.queue_draw()
 	def drag(self,widget,event):
 		if self.car != None:
 			if self.car.orientation == "H":
-				pass # TODO: Sumar movimiento relativo, evitar golpes
+				self.car.real_x += (event.x - self.car.real_x) + self.x_start
+				print "Real X",self.car.real_x
+				print "Limit", ((self.car.x-1)*128)
+				if self.car.real_x > (self.car.x-1)*128:
+					if not self.car.casilla_libre(1,self.level):
+						print "Casilla ocupada"
+						self.car.real_x = (self.car.x-1)*128
+					else:
+						self.car.x += 1
+				if self.car.real_x < (self.car.x-1)*128:
+					if not self.car.casilla_libre(-1,self.level):
+						self.car.real_x = (self.car.x-1)*128
+					else:
+						self.car.x -= 1
+			else:# FALLO AL BAJAR MUY RAPIDO
+				self.car.real_y += (event.y - self.car.real_y) + self.y_start
+				if self.car.real_y > (self.car.y)*128:
+					if not self.car.casilla_libre(1,self.level):
+						print "Casilla ocupada"
+						self.car.real_y = (self.car.y-1)*128
+					else:
+						self.car.y += 1
+				if self.car.real_y < (self.car.y)*128:
+					if not self.car.casilla_libre(-1,self.level):
+						self.car.real_y = (self.car.y-1)*128
+					else:
+						self.car.y -= 1
+			self.queue_draw()
 			
         def set_level(self,level):
             self.level = level
+            for car in self.level:
+		car.real_x = (car.x -1)*128
+		car.real_y = (car.y -1)*128
 
 class Ventana(gtk.Window):
 	def __init__(self):
@@ -160,12 +199,13 @@ niveles = []
 f_niveles = open("niveles.txt","r")
 n_niveles = f_niveles.readline()
 n_niveles = int(n_niveles)
+names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 for i in range(0,n_niveles):
     n_coches = int(f_niveles.readline())
     coches = []
     for j in range(0,n_coches):
-        coches.append(coche.Coche(f_niveles.readline(), True if j == 0 else False))
+        coches.append(coche.Coche(f_niveles.readline(),names[j], True if j == 0 else False))
     niveles.append(coches[:])
 
 # START
