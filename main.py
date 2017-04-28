@@ -8,6 +8,8 @@
 # TODO: Mover con raton
 # TODO: Elegir nivel
 # TODO: Contar movimientos
+# TODO: Asfalto -> marcas
+# TODO: Pantalla de victoria
 
 import coche
 import gtk
@@ -25,41 +27,47 @@ class GameArea(gtk.DrawingArea):
 		self.car = None
 		self.x_start = 0
 		self.y_start = 0
+                self.win = False
+                self.asphalt = gtk.gdk.pixbuf_new_from_file("data/asphalt.png")
 	def expose(self,widget,context):
 		cr = widget.window.cairo_create()
 		width, height = widget.window.get_size()
-		cr.rectangle(0,0,width,height)
-		cr.set_source_rgb(1,1,1)
-		cr.fill()
-		#cr.set_source_rgb(1,0,0)
-		#cr.select_font_face("Comic Sans MS", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-		#cr.set_font_size(20)
-		#cr.move_to(20,20)
-		#cr.show_text("Anrokku")
-		cr.save()
-		#cr.scale()
-		#cr.set_source_pixbuf(self.car,0,0)
-		#cr.rectangle(100,100,100,100) y cr.clip() si quieres recortar
-		cr.paint()
-		cr.restore()
-
-                ## PAINT CARS
-                for car in self.level:
+                if not self.win:
+                    cr.rectangle(0,0,width,height)
+                    cr.set_source_rgb(1,1,1)
+                    cr.fill()
                     cr.save()
-                    img_width = 256
-                    img_height = 128
-                    x_scale = float(width) / float(img_width)
-                    y_scale = float(height) / float(img_height)
-                    cr.scale(x_scale/3,y_scale/6)
-                    if car.orientation == "V":
-                        cr.translate(car.real_x + 128,car.real_y + 128)
-                        cr.rotate(math.pi/2)
-                        cr.translate(-car.real_x - 128,-car.real_y)
-                    cr.set_source_pixbuf(car.img,car.real_x,car.real_y)
+                    cr.scale(float(width)/float(512),float(height)/float(512))
+                    cr.set_source_pixbuf(self.asphalt,0,0)
                     cr.paint()
                     cr.restore()
+
+                    ## PAINT CARS
+                    for car in self.level:
+                        cr.save()
+                        img_width = 256
+                        img_height = 128
+                        x_scale = float(width) / float(img_width)
+                        y_scale = float(height) / float(img_height)
+                        cr.scale(x_scale/3,y_scale/6)
+                        if car.orientation == "V":
+                            cr.translate(car.real_x + 128,car.real_y + 128)
+                            cr.rotate(math.pi/2)
+                            cr.translate(-car.real_x - 128,-car.real_y)
+                        cr.set_source_pixbuf(car.img,car.real_x,car.real_y)
+                        cr.paint()
+                        cr.restore()
+                else:
+                    cr.rectangle(0,0,width,height)
+                    cr.set_source_rgb(0,0,1)
+                    cr.fill()
+                    cr.set_source_rgb(1,1,1)
+                    cr.select_font_face("Monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+                    cr.set_font_size(round(width/8))
+                    cr.move_to(round(width/8),round(height/2))
+                    cr.show_text("¡Victoria!")
 	def drag_start(self,widget,event):
-		# SELECCIONAR COCHE
+            if not self.win:
 		width, height = widget.window.get_size()
 		u_width = width / 6
 		u_height = height / 6
@@ -75,6 +83,7 @@ class GameArea(gtk.DrawingArea):
 			self.car.x = round((self.car.real_x/128)+1)
 			self.car.y = round((self.car.real_y/128)+1)
                         if self.car.x == 6 and self.car.y == 3:
+                            self.win = True
                             print "Victoria"
 			# TODO CONTAR MOVIMIENTOS 
 			self.car = None
