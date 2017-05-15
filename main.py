@@ -4,17 +4,11 @@
 # Arroyo Calle, Adrián
 # Crespo Jiménez, Cristina Alejandra
 
-# TODO: with open
-# TODO: Mover con raton
-# TODO: Elegir nivel
-# TODO: Contar movimientos
-# TODO: Asfalto -> marcas
-# TODO: Pantalla de victoria
-
-import coche
 import gtk
+import coche
 import cairo
 import math
+import sys
 
 class GameArea(gtk.DrawingArea):
 	def __init__(self):
@@ -28,6 +22,10 @@ class GameArea(gtk.DrawingArea):
 		self.x_start = 0
 		self.y_start = 0
                 self.win = False
+                self.movements = 0
+                self.n_nivel = 0
+                self.level = niveles[0][:]
+                self.set_level(self.level)
                 self.asphalt = gtk.gdk.pixbuf_new_from_file("data/asphalt.png")
 	def expose(self,widget,context):
 		cr = widget.window.cairo_create()
@@ -57,6 +55,14 @@ class GameArea(gtk.DrawingArea):
                         cr.set_source_pixbuf(car.img,car.real_x,car.real_y)
                         cr.paint()
                         cr.restore()
+                    cr.set_source_rgb(0,0,0)
+                    cr.select_font_face("Monospace",cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+                    cr.set_font_size(16)
+                    cr.move_to(10,round(height/8)*7.75)
+                    try:
+                        cr.show_text("NIVEL "+str(self.n_nivel + 1)+"  RECORD: "+str(records[self.n_nivel])+"  MOVIMIENTOS: "+str(int(self.movements)))
+                    except:
+                        cr.show_text("NIVEL "+str(self.n_nivel +1) +"  RECORD: No establecido  MOVIMIENTOS: "+str(int(self.movements)))
                 else:
                     cr.rectangle(0,0,width,height)
                     cr.set_source_rgb(0,0,1)
@@ -75,17 +81,34 @@ class GameArea(gtk.DrawingArea):
 			if u_width*(car.x -1) < event.x < u_width*(car.x + ( (car.size -1) if car.orientation == "H" else 0)):
 				if u_height*(car.y -1) < event.y < u_height*(car.y+(( car.size -1) if car.orientation == "V" else 0)):
 					self.car = car
+                                        self.x_init = car.x
+                                        self.y_init = car.y
 					self.x_start = self.car.real_x - event.x
 					self.y_start = self.car.real_y - event.y
 					break
+            else:
+                selector = Selector()
+                n_nivel = selector.run()
+                selector.destroy()
+                self.load_level(n_nivel)
 	def drag_end(self,widget,event):
 		if self.car != None:
 			self.car.x = round((self.car.real_x/128)+1)
 			self.car.y = round((self.car.real_y/128)+1)
+
+                        self.movements += abs(self.x_init - self.car.x) + abs(self.y_init - self.car.y)
+                        
                         if self.car.x == 6 and self.car.y == 3:
                             self.win = True
-                            print "Victoria"
-			# TODO CONTAR MOVIMIENTOS 
+                            try:
+                                if self.movements < records[self.n_nivel]:
+                                    records[self.n_nivel] = int(self.movements)
+                                    write_records()
+                            except:
+                                records.append(int(self.movements))
+                                write_records()
+
+
 			self.car = None
 			self.set_level(self.level)
 			self.queue_draw()
@@ -122,6 +145,13 @@ class GameArea(gtk.DrawingArea):
             for car in self.level:
 		car.real_x = (car.x -1)*128
 		car.real_y = (car.y -1)*128
+        def load_level(self,n_nivel):
+            self.level = niveles[n_nivel][:]
+            self.set_level(self.level)
+            self.n_nivel = n_nivel
+            self.movements = 0
+            self.win = False
+            self.queue_draw()
 
 class Ventana(gtk.Window):
 	def __init__(self):
@@ -129,67 +159,64 @@ class Ventana(gtk.Window):
 		self.set_title("Anrokku")
 		self.set_default_size(500,500)
 		self.game = GameArea()
-                self.game.set_level(niveles[0][:])
 		self.add(self.game)
-		self.connect("delete-event",self.confirmar)
-		self.connect("destroy",gtk.main_quit)
+		self.connect("delete-event",self.menu)
+                self.connect("destroy",lambda x: sys.exit(0))
 		self.show_all()
-	def confirmar(self,widget,event,data=None):
-		dialog = gtk.MessageDialog(type=gtk.MESSAGE_QUESTION,buttons=gtk.BUTTONS_YES_NO,flags=gtk.DIALOG_MODAL)
-		dialog.set_title("Anrokku")
-		dialog.set_markup("¿Desea salir de Anrokku?")
-		response = dialog.run()
-		if response == gtk.RESPONSE_YES:
-			return False
-		else:
-			dialog.destroy()
-			return True
+                self.menu(self)
+	def menu(self,widget,data=None):
+            selector = Selector()
+            n_level = selector.run()
+            if n_level == -1:
+                self.destroy()
+            selector.destroy()
+            if n_level == -2:
+                self.menu(self)
+            else:
+                self.game.load_level(n_level)
+            return True
 
-def in_game(n_nivel):
-    j_nivel = niveles[n_nivel - 1][:]
-    win = False
-    movimientos = 0
-    while not win:
-        # MOSTRAR RECORD
-        print "NIVEL",n_nivel, "- RECORD",( records[n_nivel - 1] if len(records) >= n_nivel else "SIN BATIR")
-        pintar_nivel(j_nivel)
-        entrada = raw_input("Introduzca los movimientos: ")
-        try:
-            for c in entrada:
-                for car in j_nivel:
-                    if car.name == c.upper():
-                        direccion = 1 if c.lower() == c else -1
-                        if car.casilla_libre(direccion,j_nivel):
-                            car.mover(direccion)
-                            movimientos += 1
-                        else:
-                            print "Movimiento",c,"bloqueado"
-                            raise
-                ## COMPROBAR CONDICIÓN DE VICTORIA
-                if j_nivel[0].y == 3 and j_nivel[0].x == 6:
-                    win = True
-        except:
-            pass
-    ## GUARDAR RECORD
-    print "Enhorabuena, has ganado"
-    try:
-        records[n_nivel - 1] = movimientos
-    except:
-        records.append(movimientos)
-    write_records()
-    
-    if n_nivel != len(niveles):
-        siguiente=raw_input("¿Desea jugar al siguiente nivel? [S/N]")
-        if siguiente.upper() == "S":
-            in_game(n_nivel+1)
+class Selector(gtk.Dialog):
+    def __init__(self):
+        super(Selector,self).__init__(flags=gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT)
+        self.set_title("Anrokku - Main Menu")
+        self.set_default_size(200,400)
+        img = gtk.Image()
+        img.set_from_file("data/Anrokku.png")
+        self.vbox.pack_start(img)
+        label = gtk.Label("Selecciona el nivel")
+        self.vbox.pack_start(label)
+        combo = gtk.combo_box_new_text()
+        for i in range(len(records)+1):
+            combo.append_text("NIVEL "+str(i+1))
+        self.vbox.pack_start(combo)
+        combo.connect("changed",self.set)
+        salir = gtk.Button("Salir de Anrokku")
+        self.vbox.pack_start(salir)
+        salir.connect("clicked",self.confirmar)
+        self.connect("delete-event",self.confirmar)
+        self.show_all()
+    def set(self,widget):
+        i = widget.get_active()
+        n_level = i
+        self.response(n_level)
+    def confirmar(self,widget,data=None):
+        dialog = gtk.MessageDialog(type=gtk.MESSAGE_QUESTION,buttons=gtk.BUTTONS_YES_NO,flags=gtk.DIALOG_MODAL)
+        dialog.set_title("Anrokku")
+        dialog.set_markup("¿Desea salir de Anrokku?")
+        response = dialog.run()
+        dialog.destroy()
+        if response == gtk.RESPONSE_YES:
+            self.response(-1)
         else:
-            pass
+            self.response(-2)
+        return True
 
 def write_records():
-    f_records = open("records.txt","w")
-    for record in records:
-        f_records.write(str(record))
-        f_records.write("\n")
+    with open("records.txt","w") as f_records:
+        for record in records:
+            f_records.write(str(record))
+            f_records.write("\n")
 def read_records():
     try:
         f_records = open("records.txt","r")
@@ -203,19 +230,18 @@ read_records()
 
 
 niveles = []
-f_niveles = open("niveles.txt","r")
-n_niveles = f_niveles.readline()
-n_niveles = int(n_niveles)
-names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-for i in range(0,n_niveles):
-    n_coches = int(f_niveles.readline())
-    coches = []
-    for j in range(0,n_coches):
-        coches.append(coche.Coche(f_niveles.readline(),names[j], True if j == 0 else False))
-    niveles.append(coches[:])
-
+def read_levels():
+    f_niveles = open("niveles.txt","r")
+    n_niveles = f_niveles.readline()
+    n_niveles = int(n_niveles)
+    names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    for i in range(0,n_niveles):
+        n_coches = int(f_niveles.readline())
+        coches = []
+        for j in range(0,n_coches):
+            coches.append(coche.Coche(f_niveles.readline(),names[j], True if j == 0 else False))
+        niveles.append(coches[:])
+read_levels()
 # START
-
-ventana = Ventana()
+Ventana()
 gtk.main()
