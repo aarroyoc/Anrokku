@@ -98,7 +98,7 @@ class GameArea(gtk.DrawingArea):
 
                         self.movements += abs(self.x_init - self.car.x) + abs(self.y_init - self.car.y)
                         
-                        if self.car.x == 6 and self.car.y == 3:
+                        if self.level[0].x == 6 and self.level[0].y == 3:
                             self.win = True
                             try:
                                 if self.movements < records[self.n_nivel]:
