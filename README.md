@@ -1,5 +1,5 @@
 # Anrokku
-Anrokku is a free game made in Python 2.7 and GTK2
+Anrokku is a free game made in Python 3 and GTK3
 
 ![readme/Anrokku.png](readme/Anrokku.png)
 
@@ -9,17 +9,17 @@ Anrokku is a free game made in Python 2.7 and GTK2
 
 Anrokku requires:
 
-* Python 2.7
-* GTK 2.0
-* PyGTK
-* Cairo
+* Python 3.6
+* GTK 3.0
+* Pipenv
 
 It should be easy to install it on your operating system
 
 ## PLAY
 
 ```
-git clone http://github.com/AdrianArroyoCalle/Anrokku
+git clone http://github.com/aarroyoc/Anrokku
 cd Anrokku
-python main.py
+pipenv install
+pipenv shell python main.py
 ```
