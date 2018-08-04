@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Terminal=false
+Exec=anrokku
+Name=Anrokku
+#Icon=${SNAP}/meta/gui/icon.png
